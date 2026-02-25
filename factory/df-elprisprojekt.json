@@ -1,0 +1,9 @@
+{
+	"name": "df-elprisprojekt",
+	"location": "swedencentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "ca5fcbb4-f0b4-4c2b-8e7b-81939715f176",
+		"tenantId": "bdbf8295-0fca-4854-8b4b-8f57a8ba2815"
+	}
+}
