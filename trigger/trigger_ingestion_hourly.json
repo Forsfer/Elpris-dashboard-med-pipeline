@@ -3,7 +3,7 @@
 	"properties": {
 		"description": "Trigger som körs timvis för att hämta elpriserna från aktuell timme som nyss har passerat.",
 		"annotations": [],
-		"runtimeState": "Started",
+		"runtimeState": "Stopped",
 		"pipelines": [],
 		"type": "ScheduleTrigger",
 		"typeProperties": {
