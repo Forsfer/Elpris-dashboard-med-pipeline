@@ -1,0 +1,35 @@
+{
+	"name": "ds_prices_raw",
+	"properties": {
+		"description": "Dataset för json-struktur i elprisdatan",
+		"linkedServiceName": {
+			"referenceName": "ls_elprisdatalake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folderPath": {
+				"type": "string"
+			},
+			"fileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folderPath",
+					"type": "Expression"
+				},
+				"fileSystem": "elprisprojekt"
+			}
+		},
+		"schema": {}
+	}
+}
