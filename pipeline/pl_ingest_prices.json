@@ -1,0 +1,61 @@
+{
+	"name": "pl_ingest_prices",
+	"properties": {
+		"activities": [
+			{
+				"name": "ingest_and_copy_prices_to_datalake",
+				"description": "Hämtar data från API och lagrar i datalake.",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_prices_api",
+						"type": "DatasetReference",
+						"parameters": {
+							"relativePath": {
+								"value": "@concat(\n  formatDateTime(utcNow(),'yyyy'),\n  '/',\n  formatDateTime(utcNow(),'MM'),\n  '-',\n  formatDateTime(utcNow(),'dd'),\n  '_SE3.json'\n)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_prices_raw",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": []
+	}
+}
