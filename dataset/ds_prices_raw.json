@@ -1,8 +1,9 @@
 {
 	"name": "ds_prices_raw",
 	"properties": {
+		"description": "Dataset för json-struktur i elprisdatan",
 		"linkedServiceName": {
-			"referenceName": "ls_dl_dlelprisprojekt",
+			"referenceName": "ls_elprisdatalake",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
