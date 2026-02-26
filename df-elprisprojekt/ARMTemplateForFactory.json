@@ -1,0 +1,231 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "df-elprisprojekt"
+		},
+		"ls_elprisdatalake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_elprisdatalake'"
+		},
+		"ls_elprisdatalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://elprisdatalake.dfs.core.windows.net/"
+		},
+		"ls_prices_api_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://www.elprisetjustnu.se/api/v1/prices/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingest_prices')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ingest_and_copy_prices_to_datalake",
+						"description": "Hämtar data från API och lagrar i datalake.",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_prices_api",
+								"type": "DatasetReference",
+								"parameters": {
+									"relativePath": {
+										"value": "@concat(\n  formatDateTime(utcNow(),'yyyy'),\n  '/',\n  formatDateTime(utcNow(),'MM'),\n  '-',\n  formatDateTime(utcNow(),'dd'),\n  '_SE3.json'\n)",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_prices_raw",
+								"type": "DatasetReference",
+								"parameters": {
+									"folderPath": {
+										"value": "@concat(\n  'raw/elpriser/'\n)\n",
+										"type": "Expression"
+									},
+									"fileName": {
+										"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '.json'\n)",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_prices_api')]",
+				"[concat(variables('factoryId'), '/datasets/ds_prices_raw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_prices_api')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_prices_api",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"relativePath": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@dataset().relativePath",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_prices_api')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_prices_raw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Dataset för json-struktur i elprisdatan",
+				"linkedServiceName": {
+					"referenceName": "ls_elprisdatalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"folderPath": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folderPath",
+							"type": "Expression"
+						},
+						"fileSystem": "elprisprojekt"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_elprisdatalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_elprisdatalake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Koppling till elpris-datalake",
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_elprisdatalake_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ls_elprisdatalake_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_prices_api')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "API som innehåller elpriser i form av json-data",
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('ls_prices_api_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger_ingestion_hourly')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Trigger som körs timvis för att hämta elpriserna från aktuell timme som nyss har passerat.",
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 1,
+						"startTime": "2026-02-26T10:18:00",
+						"timeZone": "W. Europe Standard Time"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

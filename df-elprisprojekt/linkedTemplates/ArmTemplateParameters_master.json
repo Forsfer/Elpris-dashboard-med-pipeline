@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "df-elprisprojekt"
+		},
+		"ls_elprisdatalake_accountKey": {
+			"value": ""
+		},
+		"ls_elprisdatalake_properties_typeProperties_url": {
+			"value": "https://elprisdatalake.dfs.core.windows.net/"
+		},
+		"ls_prices_api_properties_typeProperties_url": {
+			"value": "https://www.elprisetjustnu.se/api/v1/prices/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
