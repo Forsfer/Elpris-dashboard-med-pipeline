@@ -51,7 +51,17 @@
 				"outputs": [
 					{
 						"referenceName": "ds_prices_raw",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"folderPath": {
+								"value": "@concat(\n  'raw/elpriser/'\n)\n",
+								"type": "Expression"
+							},
+							"fileName": {
+								"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '.json'\n)",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
