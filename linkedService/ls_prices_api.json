@@ -1,0 +1,13 @@
+{
+	"name": "ls_prices_api",
+	"properties": {
+		"description": "API som innehåller elpriser i form av json-data",
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://www.elprisetjustnu.se/api/v1/prices/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
