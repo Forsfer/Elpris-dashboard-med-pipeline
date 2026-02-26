@@ -27,7 +27,7 @@
 					"value": "@dataset().folderPath",
 					"type": "Expression"
 				},
-				"fileSystem": "dlelprisprojekt"
+				"fileSystem": "elprisprojekt"
 			}
 		},
 		"schema": {}
