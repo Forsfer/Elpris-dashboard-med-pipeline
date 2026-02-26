@@ -1,0 +1,34 @@
+{
+	"name": "ds_prices_raw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_dl_dlelprisprojekt",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folderPath": {
+				"type": "string"
+			},
+			"fileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folderPath",
+					"type": "Expression"
+				},
+				"fileSystem": "dlelprisprojekt"
+			}
+		},
+		"schema": {}
+	}
+}
