@@ -1,0 +1,23 @@
+{
+	"name": "ds_prices_api",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_prices_api",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"relativePath": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@dataset().relativePath",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}
