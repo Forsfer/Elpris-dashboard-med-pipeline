@@ -4,14 +4,7 @@
 		"description": "Trigger som körs timvis för att hämta elpriserna från aktuell timme som nyss har passerat.",
 		"annotations": [],
 		"runtimeState": "Started",
-		"pipelines": [
-			{
-				"pipelineReference": {
-					"referenceName": "pl_ingest_prices",
-					"type": "PipelineReference"
-				}
-			}
-		],
+		"pipelines": [],
 		"type": "ScheduleTrigger",
 		"typeProperties": {
 			"recurrence": {
