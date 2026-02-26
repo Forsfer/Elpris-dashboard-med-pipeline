@@ -1,0 +1,12 @@
+{
+	"name": "elpris_api",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://www.elprisetjustnu.se/api/v1/prices/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
