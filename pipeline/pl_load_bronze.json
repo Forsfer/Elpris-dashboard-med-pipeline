@@ -1,0 +1,59 @@
+{
+	"name": "pl_load_bronze",
+	"properties": {
+		"description": "Pipeline som laddar in data från data lake till bronslagret i SQL-databasen. fileName innehåller inhämtning -1 timme eftersom att när inhämtningen görs t.ex. 14:05 så vill man hämta timmen som just passerat, kl 13-14.",
+		"activities": [
+			{
+				"name": "copy_and_load_prices_to_bronze_layer",
+				"description": "Kopierar från datalake och matar in i bronslager i SQL.",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "source_file",
+								"value": "$$FILENAME"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_datalake_prices",
+						"type": "DatasetReference",
+						"parameters": {
+							"folderPath": {
+								"value": "@concat(\n  'raw/elpriser'\n)",
+								"type": "Expression"
+							},
+							"fileName": {
+								"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '.json'\n)",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"annotations": []
+	}
+}
