@@ -1,0 +1,57 @@
+{
+	"name": "ds_sql_bronze_load",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_db_elprisprojekt",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "raw_id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "sek_per_kwh",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 5
+			},
+			{
+				"name": "eur_per_kwh",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 5
+			},
+			{
+				"name": "exr",
+				"type": "decimal",
+				"precision": 12,
+				"scale": 6
+			},
+			{
+				"name": "time_start",
+				"type": "varchar"
+			},
+			{
+				"name": "time_end",
+				"type": "varchar"
+			},
+			{
+				"name": "load_timestamp",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "source_file",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "bronze",
+			"table": "prices"
+		}
+	}
+}
