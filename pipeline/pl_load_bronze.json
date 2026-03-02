@@ -34,7 +34,78 @@
 							"type": "JsonReadSettings"
 						}
 					},
-					"enableStaging": false
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "upsert",
+						"upsertSettings": {
+							"useTempDB": true,
+							"keys": [
+								"sek_per_kwh"
+							]
+						},
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['SEK_per_kWh']"
+								},
+								"sink": {
+									"name": "sek_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EUR_per_kWh']"
+								},
+								"sink": {
+									"name": "eur_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EXR']"
+								},
+								"sink": {
+									"name": "exr",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_start']"
+								},
+								"sink": {
+									"name": "time_start",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_end']"
+								},
+								"sink": {
+									"name": "time_end",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['source_file']"
+								},
+								"sink": {
+									"name": "source_file",
+									"type": "String"
+								}
+							}
+						]
+					}
 				},
 				"inputs": [
 					{
@@ -50,6 +121,12 @@
 								"type": "Expression"
 							}
 						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_sql_bronze_load",
+						"type": "DatasetReference"
 					}
 				]
 			}
