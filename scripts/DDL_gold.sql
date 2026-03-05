@@ -11,6 +11,8 @@ BEGIN
 	);
 END;
 
+GO
+
 IF OBJECT_ID('gold.dim_date', 'U') IS NULL
 BEGIN
 	CREATE TABLE gold.dim_date (
@@ -26,22 +28,28 @@ BEGIN
 	);
 END;
 
+GO
+
 IF OBJECT_ID('gold.dim_time', 'U') IS NULL
 BEGIN
 	CREATE TABLE gold.dim_time (
         time_key     INT identity(1,1) PRIMARY KEY,
 	    hour         TINYINT NOT NULL, /* t.ex. 23 */
-             /*Borde quarter_hour vara 1,2,3,4 istället? Enklare att visa i graf om det skulle behövas */
-        quarter_hour TINYINT NOT NULL, /* 0, 1, 2, 3. Vilken kvart i timmen det handlar om. Är det timpris blir det 0*/
+        quarter_hour TINYINT NOT NULL, /*1, 2, 3, 4. Vilken kvart i timmen det handlar om. Är det timpris blir det 1*/
         time_label   CHAR(5) NOT NULL /* t.ex. 20:00 */
 	);
 END;
 
+GO
 
 IF OBJECT_ID('gold.fact_prices', 'U') IS NULL
 BEGIN
 	CREATE TABLE gold.fact_prices (
-	    sek_per_kwh      DECIMAL(10,5) NOT NULL,
+	    zone_key         INT NOT NULL,
+        date_key         INT NOT NULL,
+        time_key         INT NOT NULL,
+        
+        sek_per_kwh      DECIMAL(10,5) NOT NULL,
 	    eur_per_kwh      DECIMAL(10,5) NOT NULL,
 	    exchange_rate    DECIMAL(12,6) NOT NULL,
         duration_minutes TINYINT NOT NULL,
@@ -64,3 +72,5 @@ BEGIN
             REFERENCES gold.dim_time(time_key)
 	);
 END;
+
+GO
