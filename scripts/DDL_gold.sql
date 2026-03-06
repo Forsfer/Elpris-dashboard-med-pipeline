@@ -25,8 +25,12 @@ BEGIN
         quarter      SMALLINT NOT NULL,
         month        SMALLINT NOT NULL,
         month_name   VARCHAR(15) NOT NULL,
+            CONSTRAINT CK_gold_dim_date_month_name
+        	CHECK (month_name IN ('Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December')),
         date         DATE NOT NULL,
-        day_name_swe VARCHAR(8) NOT NULL,
+        day_name VARCHAR(8) NOT NULL,
+            CONSTRAINT CK_gold_dim_date_day_name
+        	CHECK (day_name IN ('Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag','Söndag')),
         day_of_week  TINYINT NOT NULL,
         day_of_month TINYINT NOT NULL
 	);
