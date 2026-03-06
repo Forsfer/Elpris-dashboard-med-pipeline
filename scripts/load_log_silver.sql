@@ -1,6 +1,8 @@
 /* ---
 Denna koden skapar tabellen load_log i silverschemat som ska matas av data från proceduren load_silver som transformerar och laddar 
 in data i silver.prices.
+
+ATT FÖRBÄTTRA: status_type kanske borde ha fasta värden man endast får välja?
 */ ---
 
 IF OBJECT_ID('silver.load_log', 'U') IS NULL
