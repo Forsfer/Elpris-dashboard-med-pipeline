@@ -80,7 +80,7 @@ BEGIN TRY
                 status_type
         )
         VALUES (
-                OBJECT_NAME(@@PROCID),
+                OBJECT_NAME(@@PROCID), -- loggar namn på procedur som körs
                 (SELECT TOP 1 source_file FROM bronze.prices),
                 @rows_inserted,
                 'SUCCESS'
@@ -100,7 +100,7 @@ BEGIN CATCH
                 error_message
         )
         VALUES (
-                OBJECT_NAME(@@PROCID),
+                OBJECT_NAME(@@PROCID), -- loggar namn på procedur som körs
                 (SELECT TOP 1 source_file FROM bronze.prices),
                 0,
                 'FAIL',
