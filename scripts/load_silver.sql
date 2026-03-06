@@ -74,11 +74,13 @@ BEGIN TRY
         SET @rows_inserted = @@ROWCOUNT;
 
         INSERT INTO silver.load_log (
+                procedure_name,
                 source_file,
                 rows_inserted,
                 status_type
         )
         VALUES (
+                OBJECT_NAME(@@PROCID),
                 (SELECT TOP 1 source_file FROM bronze.prices),
                 @rows_inserted,
                 'SUCCESS'
@@ -91,12 +93,14 @@ BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
 
         INSERT INTO silver.load_log (
+                procedure_name,
                 source_file,
                 rows_inserted,
                 status_type,
                 error_message
         )
         VALUES (
+                OBJECT_NAME(@@PROCID),
                 (SELECT TOP 1 source_file FROM bronze.prices),
                 0,
                 'FAIL',
