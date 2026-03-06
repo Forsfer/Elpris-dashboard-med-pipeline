@@ -22,15 +22,15 @@ BEGIN
 	CREATE TABLE gold.dim_date (
         date_key     INT identity(1,1) PRIMARY KEY,
 	    year         SMALLINT NOT NULL,
-        quarter      SMALLINT NOT NULL,
-        month        SMALLINT NOT NULL,
-        month_name   VARCHAR(15) NOT NULL,
+        quarter      TINYINT NOT NULL,
+        month        TINYINT NOT NULL,
+        month_name   VARCHAR(10) NOT NULL,
             CONSTRAINT CK_gold_dim_date_month_name
-        	CHECK (month_name IN ('Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December')),
+        	CHECK (month_name IN ('januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december')),
         date         DATE NOT NULL,
         day_name VARCHAR(8) NOT NULL,
             CONSTRAINT CK_gold_dim_date_day_name
-        	CHECK (day_name IN ('Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag','Söndag')),
+        	CHECK (day_name IN ('måndag','tisdag','onsdag','torsdag','fredag','lördag','söndag')),
         day_of_week  TINYINT NOT NULL,
         day_of_month TINYINT NOT NULL
 	);
