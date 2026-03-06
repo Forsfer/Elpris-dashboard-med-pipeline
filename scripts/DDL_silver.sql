@@ -12,8 +12,10 @@ BEGIN
 	    time_start      datetimeoffset NOT NULL,
 	    time_end        datetimeoffset NOT NULL, 
         duration_minutes TINYINT NOT NULL,
+			CONSTRAINT CK_silver_prices_duration_minutes
+        	CHECK (duration_minutes IN (15,60)),
         zone_code       varchar(10) NOT NULL,
-			CONSTRAINT CK_ExampleTable_zone_code
+			CONSTRAINT CK_silver_prices_zone_code
         	CHECK (zone_code IN ('SE1','SE2','SE3','SE4')),
 
 	    proc_timestamp datetime2 NOT NULL DEFAULT sysdatetime(),
