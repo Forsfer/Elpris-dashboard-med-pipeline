@@ -66,7 +66,7 @@ BEGIN TRY
         FROM bronze.prices b  
         WHERE NOT EXISTS (
                 SELECT 1
-                FROM SILVER.PRICES s
+                FROM silver.prices s
                 WHERE s.zone_code = SUBSTRING(b.source_file, 17, 3)
                 AND s.time_start = b.time_start
         );
