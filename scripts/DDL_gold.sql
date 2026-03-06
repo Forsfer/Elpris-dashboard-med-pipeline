@@ -7,7 +7,11 @@ BEGIN
 	CREATE TABLE gold.dim_zone (
         zone_key  INT identity(1,1) PRIMARY KEY,
 	    zone_code VARCHAR(10) NOT NULL,
-        zone_name VARCHAR(30) NOT NULL 
+            CONSTRAINT CK_gold_dim_zone_zone_code
+        	CHECK (zone_code IN ('SE1','SE2','SE3','SE4')),
+        zone_name VARCHAR(30) NOT NULL,
+            CONSTRAINT CK_gold_dim_zone_zone_name
+        	CHECK (zone_name IN ('Luleå','Sundsvall','Stockholm','Malmö')),
 	);
 END;
 
