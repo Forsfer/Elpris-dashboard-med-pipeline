@@ -49,7 +49,7 @@ BEGIN TRY
         INSERT INTO silver.prices (
                 sek_per_kwh,
                 eur_per_kwh,
-                exr,
+                exchange_rate,
                 time_start,
                 time_end,
                 duration_minutes,
