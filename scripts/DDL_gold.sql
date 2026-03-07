@@ -61,6 +61,8 @@ BEGIN
 	    eur_per_kwh      DECIMAL(10,5) NOT NULL,
 	    exchange_rate    DECIMAL(12,6) NOT NULL,
         duration_minutes TINYINT NOT NULL,
+        CONSTRAINT CK_gold_fact_prices_duration_minutes
+        	CHECK (duration_minutes IN (15, 60)),
 
         timestamp_utc    DATETIME2, /* UTC har inte vinter/sommartid, så den kan användas för det problemet */
 
