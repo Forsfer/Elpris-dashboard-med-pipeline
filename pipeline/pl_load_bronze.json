@@ -53,7 +53,8 @@
 									"upsertSettings": {
 										"useTempDB": true,
 										"keys": [
-											"time_start"
+											"time_start",
+											"source_file"
 										]
 									},
 									"sqlWriterUseTableLock": false,
