@@ -8,7 +8,7 @@ BEGIN
 	CREATE TABLE silver.prices (
 	    sek_per_kwh     decimal(10,5) NOT NULL,
 	    eur_per_kwh     decimal(10,5) NOT NULL,
-	    exr             decimal(12,6) NOT NULL,
+	    exchange_rate   decimal(12,6) NOT NULL,
 	    time_start      datetimeoffset NOT NULL,
 	    time_end        datetimeoffset NOT NULL, 
         duration_minutes TINYINT NOT NULL,
