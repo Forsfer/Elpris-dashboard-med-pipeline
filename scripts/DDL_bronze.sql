@@ -17,7 +17,7 @@ BEGIN
 	    time_end        datetimeoffset NULL,
 	
 	    load_timestamp datetime2 NOT NULL DEFAULT sysdatetime(),
-	    source_file     varchar(260) NULL /* Namn på källfilen */
+	    source_file     varchar(260) NULL, /* Namn på källfilen */
 
 		CONSTRAINT UQ_bronze_file_time -- Fixar problemet att det blir en dubbel inladdning av fil
         	UNIQUE (source_file, time_start)
