@@ -53,7 +53,8 @@ BEGIN TRY
                 time_start,
                 time_end,
                 duration_minutes,
-                zone_code
+                zone_code,
+                source_file
         )
         SELECT
                 b.sek_per_kwh,
@@ -62,7 +63,8 @@ BEGIN TRY
                 b.time_start,
                 b.time_end,
                 DATEDIFF(minute, b.time_start, b.time_end),
-                SUBSTRING(b.source_file, 17, 3)
+                SUBSTRING(b.source_file, 17, 3),
+                source_file
         FROM bronze.prices b  
         WHERE NOT EXISTS (
                 SELECT 1

@@ -17,6 +17,7 @@ BEGIN
         zone_code       varchar(10) NOT NULL,
 			CONSTRAINT CK_silver_prices_zone_code
         	CHECK (zone_code IN ('SE1','SE2','SE3','SE4')),
+		source_file VARCHAR(260) NOT NULL,
 
 	    proc_timestamp datetime2 NOT NULL DEFAULT sysdatetime(),
         CONSTRAINT PK_silver_prices
