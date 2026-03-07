@@ -14,6 +14,7 @@
 						"value": "@createArray('SE1','SE2','SE3','SE4')",
 						"type": "Expression"
 					},
+					"isSequential": true,
 					"activities": [
 						{
 							"name": "copy_and_load_prices_to_bronze_layer_copy1",
@@ -52,7 +53,7 @@
 									"upsertSettings": {
 										"useTempDB": true,
 										"keys": [
-											"sek_per_kwh"
+											"time_start"
 										]
 									},
 									"sqlWriterUseTableLock": false,
