@@ -439,6 +439,12 @@
 						"typeProperties": {
 							"source": {
 								"type": "JsonSource",
+								"additionalColumns": [
+									{
+										"name": "source_file",
+										"value": "$$FILENAME"
+									}
+								],
 								"storeSettings": {
 									"type": "AzureBlobFSReadSettings",
 									"recursive": true,
@@ -458,7 +464,66 @@
 								"writeBehavior": "insert",
 								"sqlWriterUseTableLock": false
 							},
-							"enableStaging": false
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['SEK_per_kWh']"
+										},
+										"sink": {
+											"name": "sek_per_kwh",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "$['EUR_per_kWh']"
+										},
+										"sink": {
+											"name": "eur_per_kwh",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "$['EXR']"
+										},
+										"sink": {
+											"name": "exr",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "$['time_start']"
+										},
+										"sink": {
+											"name": "time_start",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"path": "$['time_end']"
+										},
+										"sink": {
+											"name": "time_end",
+											"type": "DateTimeOffset"
+										}
+									},
+									{
+										"source": {
+											"path": "$['source_file']"
+										},
+										"sink": {
+											"name": "source_file",
+											"type": "String"
+										}
+									}
+								]
+							}
 						},
 						"inputs": [
 							{
