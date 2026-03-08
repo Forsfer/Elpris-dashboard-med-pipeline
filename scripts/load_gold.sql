@@ -119,17 +119,16 @@ BEGIN TRY
             ON d.date = CONVERT(date, s.time_start)
 
         JOIN gold.dim_time t
-            ON t.hour = DATEPART(HOUR, s.time_start)
-        AND t.quarter_hour = DATEPART(MINUTE, s.time_start)/15 + 1
+                ON  t.hour         = DATEPART(HOUR,   SWITCHOFFSET(s.time_start, '+00:00'))
+                AND t.quarter_hour = DATEPART(MINUTE, SWITCHOFFSET(s.time_start, '+00:00'))/15 + 1
 
 
         WHERE NOT EXISTS (
                 SELECT 1
                 FROM gold.fact_prices f
                 WHERE f.zone_key = z.zone_key
-                AND f.date_key = d.date_key
-                AND f.time_key = t.time_key
-        );
+                AND f.timestamp_utc = CAST(s.time_start AT TIME ZONE 'UTC' AS datetime2)
+        )
 
         /* ******************************
                 Loggning 
