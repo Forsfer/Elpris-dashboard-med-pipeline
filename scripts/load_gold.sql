@@ -107,7 +107,7 @@ BEGIN TRY
                 s.sek_per_kwh AS sek_per_kwh,
                 s.eur_per_kwh AS eur_per_kwh,
                 s.exchange_rate AS exchange_rate,
-                DATEDIFF(MINUTE, s.time_start, s.time_end) AS duration_minutes,
+                s.duration_minutes AS duration_minutes,
                 CAST(s.time_start AT TIME ZONE 'UTC' AS datetime2) AS timestamp_utc
    
         FROM silver.prices s
