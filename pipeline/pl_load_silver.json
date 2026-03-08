@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "EXEC_silver_procedure",
+				"name": "exec_silver_procedure",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [],
 				"policy": {

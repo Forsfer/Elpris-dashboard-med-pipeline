@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "ForEach price_zone",
+				"name": "foreach_price_zone",
 				"description": "Pipelinen itererar över de 4 olika elpris-zonerna och utför inhämtning av data från APIet för varje zon (med 2 sekunders paus mellan requests) och lägger in data i data lake.",
 				"type": "ForEach",
 				"dependsOn": [],

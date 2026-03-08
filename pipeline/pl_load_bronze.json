@@ -4,7 +4,7 @@
 		"description": "Pipeline som laddar in data från data lake till bronslagret i SQL-databasen. fileName innehåller inhämtning -1 timme eftersom att när inhämtningen görs t.ex. 14:05 så vill man hämta timmen som just passerat, kl 13-14.",
 		"activities": [
 			{
-				"name": "ForEach load_bronze",
+				"name": "foreach_load_bronze",
 				"description": "Pipelinen itererar över de 4 olika elpris-zonerna och utför inhämtning av data från Data lake för varje zon och lägger in data i SQL bronslager.",
 				"type": "ForEach",
 				"dependsOn": [],

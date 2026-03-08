@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "EXEC_gold_procedure",
+				"name": "exec_gold_procedure",
 				"type": "SqlServerStoredProcedure",
 				"dependsOn": [],
 				"policy": {
