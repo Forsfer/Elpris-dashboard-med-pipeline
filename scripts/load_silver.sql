@@ -16,18 +16,6 @@ BEGIN TRY
         ------------------------------- */
         DECLARE @validation NVARCHAR(MAX) = '';
 
-        -- Kontrollerar duration
-        IF EXISTS ( 
-                SELECT 1
-                FROM bronze.prices 
-                WHERE DATEDIFF( -- SWITCHOFFSET används för att bytena mellan sommar/vintertid ska bli korrekta. 
-                        minute,
-                        SWITCHOFFSET(time_start,'+00:00'),
-                        SWITCHOFFSET(time_end,'+00:00')
-                ) NOT IN (15,60)
-        )
-        SET @validation = @validation + 'duration_minutes must be either 15 or 60. ';
-
         -- Kontrollerar zonkod
         IF EXISTS ( 
                 SELECT 1
@@ -66,11 +54,10 @@ BEGIN TRY
                 b.exr,
                 b.time_start,
                 b.time_end,
-                DATEDIFF( -- SWITCHOFFSET används för att bytena mellan sommar/vintertid ska bli korrekta. 
-                        minute,
-                        SWITCHOFFSET(b.time_start,'+00:00'),
-                        SWITCHOFFSET(b.time_end,'+00:00')
-                ),
+                duration_minutes = CASE
+                        WHEN b.time_start < '2025-10-01' THEN 60
+                        ELSE 15
+                END,
                 SUBSTRING(b.source_file, 17, 3),
                 source_file
         FROM bronze.prices b  
