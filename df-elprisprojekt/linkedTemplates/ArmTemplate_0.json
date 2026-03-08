@@ -811,6 +811,44 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/tr_delete_old_prices_in_bronze')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_delete_old_prices_in_bronze",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-03-08T19:15:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								5
+							],
+							"hours": [
+								0
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_delete_old_prices_in_bronze')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_orchestration_backfill')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1000,6 +1038,45 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_load_bronze')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_load_silver')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_load_gold')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tr_incremental_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "executes the incremental pipeline",
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_orchestration_incremental",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2026-03-08T20:00:00",
+						"timeZone": "W. Europe Standard Time",
+						"schedule": {
+							"minutes": [
+								1
+							],
+							"hours": [
+								1
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_orchestration_incremental')]"
 			]
 		}
 	]
