@@ -1,0 +1,38 @@
+{
+	"name": "ds_datalake_prices_backfill",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_elprisdatalake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "raw/elpriser",
+				"fileSystem": "elprisprojekt"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"SEK_per_kWh": {
+					"type": "number"
+				},
+				"EUR_per_kWh": {
+					"type": "number"
+				},
+				"EXR": {
+					"type": "number"
+				},
+				"time_start": {
+					"type": "string"
+				},
+				"time_end": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}
