@@ -1,0 +1,33 @@
+{
+	"name": "tr_incremental_pipeline",
+	"properties": {
+		"description": "executes the incremental pipeline",
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_orchestration_incremental",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2026-03-08T20:00:00",
+				"timeZone": "W. Europe Standard Time",
+				"schedule": {
+					"minutes": [
+						1
+					],
+					"hours": [
+						1
+					]
+				}
+			}
+		}
+	}
+}
