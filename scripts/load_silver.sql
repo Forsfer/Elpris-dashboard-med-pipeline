@@ -20,7 +20,11 @@ BEGIN TRY
         IF EXISTS ( 
                 SELECT 1
                 FROM bronze.prices 
-                WHERE DATEDIFF(minute, time_start, time_end) NOT IN (15,60)
+                WHERE DATEDIFF( -- SWITCHOFFSET används för att bytena mellan sommar/vintertid ska bli korrekta. 
+                        minute,
+                        SWITCHOFFSET(time_start,'+00:00'),
+                        SWITCHOFFSET(time_end,'+00:00')
+                ) NOT IN (15,60)
         )
         SET @validation = @validation + 'duration_minutes must be either 15 or 60. ';
 
@@ -62,7 +66,11 @@ BEGIN TRY
                 b.exr,
                 b.time_start,
                 b.time_end,
-                DATEDIFF(minute, b.time_start, b.time_end),
+                DATEDIFF( -- SWITCHOFFSET används för att bytena mellan sommar/vintertid ska bli korrekta. 
+                        minute,
+                        SWITCHOFFSET(b.time_start,'+00:00'),
+                        SWITCHOFFSET(b.time_end,'+00:00')
+                ),
                 SUBSTRING(b.source_file, 17, 3),
                 source_file
         FROM bronze.prices b  
