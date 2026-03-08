@@ -7,9 +7,25 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "df-elprisprojekt"
 		},
+		"ls_db_elprisprojekt_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_db_elprisprojekt'"
+		},
 		"ls_elprisdatalake_accountKey": {
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'ls_elprisdatalake'"
+		},
+		"ls_db_elprisprojekt_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "elprisprojekt.database.windows.net"
+		},
+		"ls_db_elprisprojekt_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "db-elprisprojekt"
+		},
+		"ls_db_elprisprojekt_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sqladmin"
 		},
 		"ls_elprisdatalake_properties_typeProperties_url": {
 			"type": "string",
@@ -24,6 +40,29 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_db_elprisprojekt')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Linked service till SQL-databasen i elprisprojektet",
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('ls_db_elprisprojekt_properties_typeProperties_server')]",
+					"database": "[parameters('ls_db_elprisprojekt_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('ls_db_elprisprojekt_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_db_elprisprojekt_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ls_elprisdatalake')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -59,25 +98,115 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/trigger_ingestion_hourly')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
+			"name": "[concat(parameters('factoryName'), '/pl_load_gold')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "Trigger som körs timvis för att hämta elpriserna från aktuell timme som nyss har passerat.",
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Hour",
-						"interval": 1,
-						"startTime": "2026-02-26T10:18:00",
-						"timeZone": "W. Europe Standard Time"
+				"activities": [
+					{
+						"name": "exec_gold_procedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[gold].[load_gold]"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_db_elprisprojekt",
+							"type": "LinkedServiceReference"
+						}
 					}
-				}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_db_elprisprojekt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_load_silver')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "exec_silver_procedure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[silver].[load_silver]"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_db_elprisprojekt",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_db_elprisprojekt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_datalake_prices')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_elprisdatalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"folderPath": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folderPath",
+							"type": "Expression"
+						},
+						"fileSystem": "elprisprojekt"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_elprisdatalake')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ds_prices_api')]",
@@ -148,73 +277,151 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_sql_bronze_load')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_db_elprisprojekt",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "raw_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "sek_per_kwh",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 5
+					},
+					{
+						"name": "eur_per_kwh",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 5
+					},
+					{
+						"name": "exr",
+						"type": "decimal",
+						"precision": 12,
+						"scale": 6
+					},
+					{
+						"name": "time_start",
+						"type": "varchar"
+					},
+					{
+						"name": "time_end",
+						"type": "varchar"
+					},
+					{
+						"name": "load_timestamp",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "source_file",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "bronze",
+					"table": "prices"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_db_elprisprojekt')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_ingest_prices')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "ingest_and_copy_prices_to_datalake",
-						"description": "Hämtar data från API och lagrar i datalake.",
-						"type": "Copy",
+						"name": "foreach_price_zone",
+						"description": "Pipelinen itererar över de 4 olika elpris-zonerna och utför inhämtning av data från APIet för varje zon (med 2 sekunders paus mellan requests) och lägger in data i data lake.",
+						"type": "ForEach",
 						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
 						"userProperties": [],
 						"typeProperties": {
-							"source": {
-								"type": "RestSource",
-								"httpRequestTimeout": "00:01:40",
-								"requestInterval": "00.00:00:00.010",
-								"requestMethod": "GET",
-								"paginationRules": {
-									"supportRFC5988": "true"
-								}
+							"items": {
+								"value": "@createArray('SE1','SE2','SE3','SE4')",
+								"type": "Expression"
 							},
-							"sink": {
-								"type": "JsonSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "JsonWriteSettings"
-								}
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_prices_api",
-								"type": "DatasetReference",
-								"parameters": {
-									"relativePath": {
-										"value": "@concat(\n  formatDateTime(utcNow(),'yyyy'),\n  '/',\n  formatDateTime(utcNow(),'MM'),\n  '-',\n  formatDateTime(utcNow(),'dd'),\n  '_SE3.json'\n)",
-										"type": "Expression"
-									}
-								}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_prices_raw",
-								"type": "DatasetReference",
-								"parameters": {
-									"folderPath": {
-										"value": "@concat(\n  'raw/elpriser/'\n)\n",
-										"type": "Expression"
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "ingest_and_copy_prices_to_datalake",
+									"description": "Hämtar data från API och lagrar i datalake.",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
 									},
-									"fileName": {
-										"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '.json'\n)",
-										"type": "Expression"
-									}
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_prices_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"relativePath": {
+													"value": "@concat(\n  formatDateTime(utcNow(),'yyyy'),\n  '/',\n  formatDateTime(utcNow(),'MM'),\n  '-',\n  formatDateTime(utcNow(),'dd'),\n  '_',\n  item(),\n  '.json'\n)",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_prices_raw",
+											"type": "DatasetReference",
+											"parameters": {
+												"folderPath": {
+													"value": "@concat(\n  'raw/elpriser/'\n)\n",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '_',\n  item(),\n  '.json'\n)",
+													"type": "Expression"
+												}
+											}
+										}
+									]
 								}
-							}
-						]
+							]
+						}
 					}
 				],
 				"policy": {
@@ -225,6 +432,277 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_prices_api')]",
 				"[concat(variables('factoryId'), '/datasets/ds_prices_raw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_load_bronze')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Pipeline som laddar in data från data lake till bronslagret i SQL-databasen. fileName innehåller inhämtning -1 timme eftersom att när inhämtningen görs t.ex. 14:05 så vill man hämta timmen som just passerat, kl 13-14.",
+				"activities": [
+					{
+						"name": "foreach_load_bronze",
+						"description": "Pipelinen itererar över de 4 olika elpris-zonerna och utför inhämtning av data från Data lake för varje zon och lägger in data i SQL bronslager.",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@createArray('SE1','SE2','SE3','SE4')",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "copy_and_load_prices_to_bronze_layer_copy1",
+									"description": "Kopierar från datalake och matar in i bronslager i SQL.",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "JsonSource",
+											"additionalColumns": [
+												{
+													"name": "source_file",
+													"value": "$$FILENAME"
+												}
+											],
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "JsonReadSettings"
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "upsert",
+											"upsertSettings": {
+												"useTempDB": true,
+												"keys": [
+													"time_start",
+													"source_file"
+												]
+											},
+											"sqlWriterUseTableLock": false,
+											"disableMetricsCollection": false
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "$['SEK_per_kWh']"
+													},
+													"sink": {
+														"name": "sek_per_kwh",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "$['EUR_per_kWh']"
+													},
+													"sink": {
+														"name": "eur_per_kwh",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "$['EXR']"
+													},
+													"sink": {
+														"name": "exr",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "$['time_start']"
+													},
+													"sink": {
+														"name": "time_start",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "$['time_end']"
+													},
+													"sink": {
+														"name": "time_end",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "$['source_file']"
+													},
+													"sink": {
+														"name": "source_file",
+														"type": "String"
+													}
+												}
+											]
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datalake_prices",
+											"type": "DatasetReference",
+											"parameters": {
+												"folderPath": {
+													"value": "@concat(\n  'raw/elpriser'\n)",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@concat(\n  'prices_',\n  formatDateTime(addHours(utcNow(), -1), 'yyyyMMdd'),\n  '_',\n  item(),\n  '.json'\n)",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_sql_bronze_load",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_datalake_prices')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sql_bronze_load')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_orchestration_incremental')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ingest_prices",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_ingest_prices",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "load_bronze",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "ingest_prices",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_load_bronze",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "load_silver",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "load_bronze",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_load_silver",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "load_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "load_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_load_gold",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_prices')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_load_bronze')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_load_silver')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_load_gold')]"
 			]
 		}
 	]
