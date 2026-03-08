@@ -1,0 +1,122 @@
+{
+	"name": "pl_backfill_load",
+	"properties": {
+		"activities": [
+			{
+				"name": "backfill_insert_into_bronze",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "source_file",
+								"value": "$$FILENAME"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "raw/elpriser/backfill",
+								"type": "Expression"
+							},
+							"wildcardFileName": "*",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['SEK_per_kWh']"
+								},
+								"sink": {
+									"name": "sek_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EUR_per_kWh']"
+								},
+								"sink": {
+									"name": "eur_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EXR']"
+								},
+								"sink": {
+									"name": "exr",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_start']"
+								},
+								"sink": {
+									"name": "time_start",
+									"type": "DateTimeOffset"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_end']"
+								},
+								"sink": {
+									"name": "time_end",
+									"type": "DateTimeOffset"
+								}
+							},
+							{
+								"source": {
+									"path": "$['source_file']"
+								},
+								"sink": {
+									"name": "source_file",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_datalake_prices_backfill",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_sql_bronze_load",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": []
+	}
+}
