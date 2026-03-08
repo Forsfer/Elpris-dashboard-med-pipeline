@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"folderPath": "raw/elpriser",
+				"folderPath": "raw/elpriser/backfill",
 				"fileSystem": "elprisprojekt"
 			}
 		},
