@@ -77,22 +77,6 @@
 									}
 								}
 							]
-						},
-						{
-							"name": "Wait two seconds",
-							"type": "Wait",
-							"dependsOn": [
-								{
-									"activity": "ingest_and_copy_prices_to_datalake",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"waitTimeInSeconds": 2
-							}
 						}
 					]
 				}
