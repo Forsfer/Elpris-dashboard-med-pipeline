@@ -36,7 +36,8 @@ BEGIN TRY
                 SELECT 1
                 FROM gold.dim_zone g
                 WHERE g.zone_code = s.zone_code
-        );
+        )
+        ORDER BY zone_code;
 
 
         -------------- dim_date-tabell --------------
@@ -64,7 +65,8 @@ BEGIN TRY
                 SELECT 1
                 FROM gold.dim_date d
                 WHERE d.date = CONVERT(date, s.time_start)
-        );
+        )
+        ORDER BY date;
 
 
         -------------- dim_time-tabell --------------
@@ -84,7 +86,8 @@ BEGIN TRY
                 FROM gold.dim_time g
                 WHERE g.hour = DATEPART(HOUR, s.time_start) -- hour och quarter_hour så att det fångar upp 20:15 och inte allt under kl 20.
                 AND g.quarter_hour = DATEPART(MINUTE, s.time_start)/15 + 1
-        );
+        )
+        ORDER BY 1, 2;
 
         -------------|- fact_prices-tabell -|-------------
         DECLARE @rows_inserted INT; -- Håller koll på antal rader som laddas in. Varje fact-rad är unik så man loggar inte rader för dimensioner.
@@ -97,7 +100,7 @@ BEGIN TRY
                 eur_per_kwh,
                 exchange_rate,
                 duration_minutes,
-                timestamp_utc
+                time_start
         )
         SELECT -- Inte distinct här som i dimension, eftersom varje rad är unik
                 z.zone_key AS zone_key,
@@ -108,7 +111,7 @@ BEGIN TRY
                 s.eur_per_kwh AS eur_per_kwh,
                 s.exchange_rate AS exchange_rate,
                 s.duration_minutes AS duration_minutes,
-                CAST(s.time_start AT TIME ZONE 'UTC' AS datetime2) AS timestamp_utc
+                s.time_start AS time_start
    
         FROM silver.prices s
 
@@ -119,15 +122,15 @@ BEGIN TRY
             ON d.date = CONVERT(date, s.time_start)
 
         JOIN gold.dim_time t
-                ON  t.hour         = DATEPART(HOUR,   SWITCHOFFSET(s.time_start, '+00:00'))
-                AND t.quarter_hour = DATEPART(MINUTE, SWITCHOFFSET(s.time_start, '+00:00'))/15 + 1
+                ON  t.hour         = DATEPART(HOUR, (s.time_start))
+                AND t.quarter_hour = DATEPART(MINUTE,(s.time_start))/15 + 1
 
 
         WHERE NOT EXISTS (
                 SELECT 1
                 FROM gold.fact_prices f
                 WHERE f.zone_key = z.zone_key
-                AND f.timestamp_utc = CAST(s.time_start AT TIME ZONE 'UTC' AS datetime2)
+                AND f.time_start = s.time_start
         )
 
         /* ******************************

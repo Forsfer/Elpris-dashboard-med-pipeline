@@ -64,10 +64,10 @@ BEGIN
         CONSTRAINT CK_gold_fact_prices_duration_minutes
         	CHECK (duration_minutes IN (15, 60)),
 
-        timestamp_utc    DATETIME2, /* UTC har inte vinter/sommartid, så den kan användas för det problemet */
+        time_start    datetimeoffset NOT NULL,
 
         CONSTRAINT PK_fact_prices
-        PRIMARY KEY (zone_key, date_key, time_key, timestamp_utc),
+        PRIMARY KEY (zone_key, date_key, time_key, time_start),
         
         CONSTRAINT FK_zone_key
             FOREIGN KEY (zone_key)
