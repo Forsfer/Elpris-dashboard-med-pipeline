@@ -1,0 +1,255 @@
+{
+	"name": "pl_orchestration_manual_load",
+	"properties": {
+		"description": "OBS!\n1. Sätt datum i Ingest både source OCH fileName i sink\n2. Sätt datum i source i manual_insert_into_bronze.",
+		"activities": [
+			{
+				"name": "manual_insert_into_bronze",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "foreach_price_zone",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "source_file",
+								"value": "$$FILENAME"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "raw/elpriser/backfill",
+								"type": "Expression"
+							},
+							"wildcardFileName": "prices_20260308_*",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['SEK_per_kWh']"
+								},
+								"sink": {
+									"name": "sek_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EUR_per_kWh']"
+								},
+								"sink": {
+									"name": "eur_per_kwh",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['EXR']"
+								},
+								"sink": {
+									"name": "exr",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_start']"
+								},
+								"sink": {
+									"name": "time_start",
+									"type": "DateTimeOffset"
+								}
+							},
+							{
+								"source": {
+									"path": "$['time_end']"
+								},
+								"sink": {
+									"name": "time_end",
+									"type": "DateTimeOffset"
+								}
+							},
+							{
+								"source": {
+									"path": "$['source_file']"
+								},
+								"sink": {
+									"name": "source_file",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_datalake_prices_backfill",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_sql_bronze_load",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "load_silver",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "manual_insert_into_bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_load_silver",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "load_gold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "load_silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_load_gold",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "foreach_price_zone",
+				"description": "Pipelinen itererar över de 4 olika elpris-zonerna och utför inhämtning av data från APIet för varje zon (med 2 sekunders paus mellan requests) och lägger in data i data lake.",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@createArray('SE1','SE2','SE3','SE4')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "ingest_and_copy_prices_to_datalake",
+							"description": "Hämtar data från API och lagrar i datalake.",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_prices_api",
+									"type": "DatasetReference",
+									"parameters": {
+										"relativePath": {
+											"value": "@concat(\n'2026/03-08_',\n  item(),\n  '.json'\n)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_prices_raw",
+									"type": "DatasetReference",
+									"parameters": {
+										"folderPath": {
+											"value": "@concat(\n  'raw/elpriser/backfill'\n)\n",
+											"type": "Expression"
+										},
+										"fileName": {
+											"value": "@concat(\n  'prices_20260308_',\n  item(),\n  '.json'\n)",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": []
+	}
+}
