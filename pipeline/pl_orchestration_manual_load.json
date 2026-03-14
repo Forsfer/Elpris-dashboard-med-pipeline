@@ -1,7 +1,7 @@
 {
 	"name": "pl_orchestration_manual_load",
 	"properties": {
-		"description": "OBS!\n1. Sätt datum i Ingest både source OCH fileName i sink\n2. Sätt datum i source i manual_insert_into_bronze",
+		"description": "OBS!\n1. Sätt datum i Ingest både source OCH fileName i sink\n2. Sätt datum i source i manual_insert_into_bronze.",
 		"activities": [
 			{
 				"name": "manual_insert_into_bronze",
