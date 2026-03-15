@@ -6,3 +6,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'silver')
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'gold')
     EXEC('CREATE SCHEMA gold');
+
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'ref')
+    EXEC('CREATE SCHEMA ref');
