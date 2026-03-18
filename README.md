@@ -7,7 +7,7 @@ Pipelinen hämtar kontinuerligt elpriser från ett externt API, lagrar rådata i
 ![Arkitektur-schema](assets/arkitektur.png)
 ## Index
 - [Kravspecifikation](#Kravspecifikation)  
-- [Pipeline-arkitektur](#Pipeline-arkitektur)  
+- [Systemarkitektur](#Systemarkitektur)  
 	- [Source](#source)  
 	- [Data Lake](#data-lake)  
 	- [Data Warehouse (DW)](#Data-Warehouse-(DW))
