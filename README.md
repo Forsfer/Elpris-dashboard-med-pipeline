@@ -96,7 +96,7 @@ Elområde specificeras i URL https://www.elprisetjustnu.se/api/v1/prices/2025/10
 **Syfte**: Lagra all rådata
 **Format**: JSON. Filnamn i formen 'prices_20260201_SE1.json'
 **Upstream**: Elpris-API
-**Downstream**: Process
+**Downstream**: DW
 ## Data Warehouse (DW)
 **Tjänst**: Azure SQL Server med 1 Azure SQL Database
 **Syfte**: Bearbeta data genom tre lager för att få 'business ready' data med star schema-struktur, och erhålla annan relevant data, redo att skickas till Power BI.
