@@ -11,6 +11,16 @@ SET DATEFIRST 1; -- Veckan börjas på måndag så day_of_week = 1–7 (måndag�
 BEGIN TRY
         BEGIN TRANSACTION;
 
+        /* *
+        Variabel som hämtar senast laddade tidsstämpel från guldlagret.
+        ISNULL säkerställer att första körningen laddar all data.
+        * */
+        DECLARE @last_loaded DATETIMEOFFSET = (
+                SELECT ISNULL(MAX(time_start), '2000-01-01')
+                FROM gold.fact_prices
+        );
+
+
         /* ******************************
         Transformering och laddning 
         ****************************** */
@@ -32,7 +42,8 @@ BEGIN TRY
                 END
    
         FROM silver.prices s
-        WHERE NOT EXISTS (
+        WHERE s.time_start > @last_loaded
+        AND NOT EXISTS (
                 SELECT 1
                 FROM gold.dim_zone g
                 WHERE g.zone_code = s.zone_code
@@ -61,12 +72,13 @@ BEGIN TRY
                 DATEPART(WEEKDAY, s.time_start) AS day_of_week, -- Veckodagsnummer 
                 DAY(s.time_start) AS day_of_month -- Dagens nummer i månaden
         FROM silver.prices s
-        WHERE NOT EXISTS (
+            WHERE s.time_start > @last_loaded
+        AND NOT EXISTS (
                 SELECT 1
                 FROM gold.dim_date d
                 WHERE d.date = CONVERT(date, s.time_start)
         )
-        ORDER BY date;
+        ORDER BY date; -- Det gör så att inladdade datum hamnar i ordning, vilket underlättar i power bi.
 
 
         -------------- dim_time-tabell --------------
@@ -81,10 +93,11 @@ BEGIN TRY
             FORMAT(s.time_start, 'HH:mm') AS time_label
    
         FROM silver.prices s
-        WHERE NOT EXISTS (
+        WHERE s.time_start > @last_loaded
+        AND NOT EXISTS (
                 SELECT 1
                 FROM gold.dim_time g
-                WHERE g.hour = DATEPART(HOUR, s.time_start) -- hour och quarter_hour så att det fångar upp 20:15 och inte allt under kl 20.
+                WHERE g.hour = DATEPART(HOUR, s.time_start)
                 AND g.quarter_hour = DATEPART(MINUTE, s.time_start)/15 + 1
         )
         ORDER BY 1, 2;
@@ -125,13 +138,7 @@ BEGIN TRY
                 ON  t.hour         = DATEPART(HOUR, (s.time_start))
                 AND t.quarter_hour = DATEPART(MINUTE,(s.time_start))/15 + 1
 
-
-        WHERE NOT EXISTS (
-                SELECT 1
-                FROM gold.fact_prices f
-                WHERE f.zone_key = z.zone_key
-                AND f.time_start = s.time_start
-        )
+        WHERE s.time_start > @last_loaded;
 
         /* ******************************
                 Loggning 
