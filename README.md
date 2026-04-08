@@ -233,9 +233,9 @@ Bild från 18/03/2026.
 
 ---
 # Framtida utveckling
-1. Kontroll av förväntad mängd inladdade rader, t.ex. 384st för ett datums data.
+1. Kontrollera förväntad mängd inladdade rader, t.ex. 384st för ett datums data.
 2. Automatiserad kontroll av suspekta eller uppenbart felaktiga värden, t.ex. onormalt höga priser.
-3. Ta fram strategi för hur felaktiga värden ska ersättas i pipelinen och något skulle gå fel.
+3. Följ modern standard och gör hela pipelinen idempotent. För nuvarande är silver och guldlager inte idempotenta, ändra från insert till upsert/merge.
 4. Kontrollera att bronslagret i SQL bara innehåller 3 dagars data och att proceduren för detta inte misslyckats på något sätt. 
 
 **Kanske:**
