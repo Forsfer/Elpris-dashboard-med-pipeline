@@ -3,13 +3,27 @@ Denna koden skapar proceduren gold.load_gold som laddar in data
 från silverlagret till guldlagret. Data laddas in i star schema-tabellerna i guldlagret och data berikas.
 */ -----------------
 
-CREATE OR ALTER PROCEDURE gold.load_gold AS
+CREATE OR ALTER PROCEDURE gold.load_gold 
+        @full_refresh BIT = 0 -- Ifall man vill ladda all data på nytt får man göra en full refresh sätta värdet till 1 vid exekution. EXEC gold.load_gold @full_refresh = 1
+        -- Parametrar deklareras före AS eftersom de är input till proceduren och definierar dess signatur (värden skickas in vid EXEC).
+AS
 SET XACT_ABORT, NOCOUNT ON -- XACT_ABORT instructs SQL Server to rollback the entire transaction and abort the batch when a run-time error occurs.
 SET LANGUAGE Swedish; -- Detta görs för att DATE-funktionerna ska ge månader och dagsnamn på svenska.
 SET DATEFIRST 1; -- Veckan börjas på måndag så day_of_week = 1–7 (måndag–söndag). Istället för att tisdag är dag 1 i en specifik vecka.
 
 BEGIN TRY
         BEGIN TRANSACTION;
+
+        /* --------------------------------
+        Truncate vid full refresh
+        -------------------------------- */
+        IF @full_refresh = 1
+        BEGIN
+                TRUNCATE TABLE gold.fact_prices;
+                TRUNCATE TABLE gold.dim_time;
+                TRUNCATE TABLE gold.dim_date;
+                TRUNCATE TABLE gold.dim_zone;
+        END
 
         /* *
         Variabel som hämtar senast laddade tidsstämpel från guldlagret.

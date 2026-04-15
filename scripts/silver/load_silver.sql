@@ -3,7 +3,10 @@ Denna koden skapar proceduren silver.load_silver som laddar in data
 från bronslagret i silverlagret. Data transformeras och validering utförs.
 */ -----------------
 
-CREATE OR ALTER PROCEDURE silver.load_silver AS
+CREATE OR ALTER PROCEDURE silver.load_silver 
+        @full_refresh BIT = 0 -- Ifall man vill ladda all data på nytt får man göra en full refresh sätta värdet till 1 vid exekution. EXEC silver.load_silver @full_refresh = 1
+        -- Parametrar deklareras före AS eftersom de är input till proceduren och definierar dess signatur (värden skickas in vid EXEC).
+AS
 SET XACT_ABORT, NOCOUNT ON -- XACT_ABORT instructs SQL Server to rollback the entire transaction and abort the batch when a run-time error occurs.
 
 BEGIN TRY
@@ -36,7 +39,13 @@ BEGIN TRY
                 THROW 50001, @validation, 1;
 
         /* --------------------------------
-        Transformering och laddning 
+        Truncate vid full refresh
+        -------------------------------- */
+        IF @full_refresh = 1 
+        TRUNCATE TABLE silver.prices;
+
+        /* --------------------------------
+        transformering och laddning 
         -------------------------------- */
         INSERT INTO silver.prices (
                 sek_per_kwh,
