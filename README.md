@@ -5,7 +5,7 @@ Lösningen är byggd som en komplett pipeline enligt data engineering- och data 
 Pipelinen hämtar kontinuerligt elpriser från ett externt API, lagrar rådata i en datalake, bearbetar och berikar datan i SQL-lager och presenterar slutligen datan i Power BI.
 
 ![Arkitektur-schema](assets/arkitektur.png)
-## Index
+## Index 
 - [Kravspecifikation](#Kravspecifikation)  
 - [Systemarkitektur](#Systemarkitektur)  
 	- [Source](#source)  
@@ -71,9 +71,13 @@ Syftet med projektet är att ta fram en interaktiv dashboard som ger en tydlig o
 # Systemarkitektur
 ## Source
 **Namn**: Elpris-API
+
 **Tjänst**: https://www.elprisetjustnu.se/api
+
 **Typ**: Rest-API
+
 **Format**: JSON
+
 **Frekvens**: 1 gång om dagen. Priser för morgondag uppkommer kl 13 varje dag. 
 	Före 1e oktober 2025 existerade endast pris per timme.
 
@@ -93,39 +97,63 @@ Exempeldata:
 Elområde specificeras i URL https://www.elprisetjustnu.se/api/v1/prices/2025/10-23_SE3.json 
 ## Data Lake
 **Tjänst**: Azure Data Lake (Storage Gen 2)
+
 **Syfte**: Lagra all rådata
+
 **Format**: JSON. Filnamn i formen 'prices_20260201_SE1.json'
+
 **Upstream**: Elpris-API
+
 **Downstream**: DW
+
 ## Data Warehouse (DW)
 **Tjänst**: Azure SQL Server med 1 Azure SQL Database
+
 **Syfte**: Bearbeta data genom tre lager för att få 'business ready' data med star schema-struktur, och erhålla annan relevant data, redo att skickas till Power BI.
+
 **Format:** TSQL
+
 **Upstream**: Data Lake
+
 **Downstream**: Serve
 
 **Info:** Alla script som används finns i mappen scripts här i github-projektet.
+
 ### Bronze layer
 **Tabellnamn i SQL:** bronze.prices
+
 **Syfte**: Ta emot rådata från data lake, addera metadata och göra data redo för att processas till nästa lager.
+
 ### Silver layer
 **Tabellnamn i SQL:** silver.prices, silver.load_silver
+
 **Syfte**: Tvätta, strukturera och berika data så att den är redo för att optimeras för analys.
+
 ### Gold layer
 **Tabellnamn i SQL:** gold.fact_prices, gold.dim_date, gold.dim_time, gold.dim_zone, gold.load_gold
+
 **Syfte**: Aggregera och kurera data så att den är redo att analyseras.
+
 ### Övrigt
 #### Appliances
 **Tabellnamn i SQL:** ref.appliances
+
 **Syfte:** Innehåller data för apparater och dess energiförbrukning, vilket används i Power BI som exempel på elförbrukning i hemmet.
+
 ## Serve
 **Tjänst**: Power BI Desktop
+
 **Syfte**: Att tillhandhålla elpris-analyser i en dashboard.
+
 **Upstream**: DW
+
 **Downstream**: Inget, Power BI är sista steget. (Uppvisning av dashboarden i på hemsidan via Power BI service räknas som utanför projektet)
+
 **Frekvens**: Dashboarden uppdateras 1 gång om dagen.
+
 ## Orchestration
 **Tjänst**: Azure Data Factory
+
 **Syfte**: Att automatisera och styra dataflödet i pipelinen
 - Säkerställa att data hämtas från Elpris-API på rätt tider.  
 - Styra laddning och transformering mellan Data Lake och Data Warehouse-lager.
@@ -137,21 +165,30 @@ Elområde specificeras i URL https://www.elprisetjustnu.se/api/v1/prices/2025/10
 ---
 # Dataflöde
 ## Inkrementell laddning
-**Syfte:** Fyller kontinuerligt projektet med dagsfärsk data 
+**Syfte:** Fyller kontinuerligt projektet med dagsfärsk data.
+
 **Flöde:**
-	1. ADF hämtar priser för dagen från Elpris-API och lagrar JSON-filer i Data Lake
-	2. ADF laddar in datan från Data Lake till brons-lagret
-	3. ADF kör `load_silver`. Data tvättas, berikas med `zone_code` och `duration_minutes` och läggs in i silver
-	4. ADF kör `load_gold`: Data transformeras och läggs in star schema beståendes av `fact_prices`, `dim_date`, `dim_time` och `dim_zone`.
-	5. Power BI refreshar datan en gång per dag och dashboarden uppdateras
-## Backfill (Historisk laddning)
-**Syfte:** Används för att fylla på gammal data i projektet 
-**Flöde:** Historisk data från 2025-01-01 hämtades med ett lokalt Python-script och lades manuellt in i Data Lake via Azure Storage Explorer. ADF-pipelinen `pl_orchestration_backfill` orkestrerade sedan laddningen genom alla tre lager: `pl_backfill_load` laddade från Data Lake till bronze, följt av `pl_load_silver` och `pl_load_gold`. 
+1. ADF hämtar priser för dagen från Elpris-API och lagrar JSON-filer i Data Lake
+	
+2. ADF laddar in datan från Data Lake till brons-lagret
+	
+3. ADF kör `load_silver`. Data tvättas, berikas med `zone_code` och `duration_minutes` och läggs in i silver
+	
+4. ADF kör `load_gold`: Data transformeras och läggs in star schema beståendes av `fact_prices`, `dim_date`, `dim_time` och `dim_zone`.
+	
+5. Power BI refreshar datan en gång per dag och dashboarden uppdateras
+## Backfill & Full refresh
+**Syfte:** Används för att fylla på gammal data i projektet.
+
+**Flöde:** Historisk data från 2025-01-01 hämtades med ett lokalt Python-script och lades manuellt in i Data Lake via Azure Storage Explorer. ADF-pipelinen `pl_orchestration_backfill` orkestrerade sedan laddningen genom alla tre lager: `pl_backfill_load` laddade från Data Lake till bronze, följt av `pl_load_silver` och `pl_load_gold`.
+OBS. Backfill-pipelinen är nu ersatt av full refresh som används för att ladda om hela databasen på nytt ifall det skulle behövas.
 
 ---
 # Datamodell
 ![Datamodell](assets/datamodell.png)
-
+## Idempotens
+Viss idempotens, men inte helt? 
+Data lake och bronslager ersätter rader om rader för samma tidspunkter laddas in och är fullt idempotenta, men i silver och guld-lager så finns det constraint vilket gör att om det saknas data så laddas data in, och om det existerar data så blockas det av constraint. Data Pipeline Pocket Reference benämner data som denna pipelinen behandlar som append-only data, och om datan inte förändras så är frågan hur viktig full idempotens är, eller om pipelinen faktiskt är fullt idempotent pga sammanhanget. Vid full refresh är dock pipelinen helt idempotent i traditionell mening. 
 ## Freshness
 Datamodellen uppdateras en gång om dagen, vid midnatt.
 ## Grain definition
@@ -166,12 +203,12 @@ OBS. Bytet till sommartid gör dock att zone_key, date_key och time_key inte bli
 ---
 # Datakvalité & Validering
 ## Null Rules 
-Alla kolumner i silver och gold är definierade som `NOT NULL`. Null-värden avvisas därmed i databasen och en transaktion rullas tillbaka med `XACT_ABORT` ifall något blir fel.
+Alla kolumner i silver och gold är definierade som `NOT NULL`. Null-värden avvisas därmed i databasen och en transaktion rullas tillbaka med transaction med `XACT_ABORT` ifall något blir fel.
 ## Uniqueness
 I silver och guldlager är det constraints på alla nycklar så att det inte kan bli dubletter. zone_key, date_key, time_key och time_start tillsammans utgör helt unik nyckel.
 
 ## Schema drift 
-Ingen strategi existerar just nu.
+Om APIet förändras och inte längre matchar datasetet i Azure så kommer inte pipelinen att fungera och skicka en varning.
 
 ## Validering
 **Datatyp:** Värden som inte är kompatibla med datatypen i en kolumn blir automatiskt stoppade av SQL. 
@@ -184,12 +221,12 @@ Om någon kontroll misslyckas kastas ett fel med `THROW`, transaktionen rullas t
 
 **Saknas men planeras att implementeras:**
 Kontroll av förväntad mängd inladdade rader, t.ex. 384st för ett datums data.
-Kontroll av suspekta eller uppenbart felaktiga värden, t.ex. onormalt höga priser, utförs inte.
+Kontroll av suspekta eller uppenbart felaktiga värden, t.ex. onormalt höga priser.
 
 ---
 # Övervakning
 ### Monitoring
-**Databas:** Varje körning av `load_silver` och `load_gold` loggas i respektive loggtabell (`silver.load_log`, `gold.load_log`) med procedurnamn, antal inladdade rader, status (`SUCCESS`/`FAIL`) och eventuellt felmeddelande.
+**Databas:** Varje körning av `load_silver` och `load_gold` loggas i respektive loggtabell (`silver.load_log`, `gold.load_log`) med procedurnamn, antal inladdade rader, status (`SUCCESS`/`FAIL`), datum och eventuellt felmeddelande.
 
 **Azure:** ADF loggar alla pipeline-körningar med status, starttid och sluttid i Azure Monitor.
 ### Alerts
@@ -197,7 +234,14 @@ Mail-alerts är inställt ifall triggern i ADF som kör dagliga datan skulle mis
 
 ---
 # Recovery
-**Strategi om pipeline misslyckas:** Det finns en pipeline för manuell inladdning av data som kan användas, om felet är i ingestion eller bronslager. Om fel data existerar i silver eller guldlager behöver datan först tas bort där ifrån vilket inga färdiga script existerar för. Datan kan inte uppdateras genom att köra någon av de existerande pipeline-aktiviteterna som för data lake och bronslager.
+## Om data saknas:
+**Om dagens pipelinekörning har misslyckats:** Testa att köra pl_orchestration_incremental igen.
+**Om ett äldre datum än idag saknas:** Välj datum i pl_orchestration_manual_load och kör den.
+**Om större mängder finns i data lake, men saknas senare:** Kör pl_orchestration_full_refresh och ladda databasen på nytt
+**Om större mängder saknas både i data lake och senare:** Använd python-scriptet för hämta in data från API, ladda in data med Azure storage manager och kör sedan full refresh. 
+
+## Om data är felaktig: 
+Tänk på att data lake och bronslager ersätter rader om rader för samma tidspunkter laddas in, medan silver- och guldlager har constraints och inte gör det. Och läs 'Om data saknas' ovanför.
 
 **Disaster recovery:** 
 - Data Lake storage i Azure har redundancy inställt så att om inte båda områdena går ner så ska datan finnas tillgänglig ändå. 
@@ -235,18 +279,24 @@ Bild från 18/03/2026.
 # Framtida utveckling
 1. Kontrollera förväntad mängd inladdade rader, t.ex. 384st för ett datums data.
 2. Automatiserad kontroll av suspekta eller uppenbart felaktiga värden, t.ex. onormalt höga priser.
-3. Följ modern standard och gör hela pipelinen idempotent. För nuvarande är silver och guldlager inte idempotenta, ändra från insert till upsert/merge.
-4. Kontrollera att bronslagret i SQL bara innehåller 3 dagars data och att proceduren för detta inte misslyckats på något sätt. 
+3. Det finns en procedur som tar bort data i bronslagret som är äldre än tre dagar, det behöver skapas en check som kollar att data faktiskt tas bort.
 
-**Kanske:**
-- En sida som presenterar el-året 2025. Högsta topparna och lägsta dalarna i pris och andra analyser. Hade dock velat ha data för tidigare år att jämföra emot.
-- Att göra Förbrukning & Mönster till en storytelling-sida där man tydligare går igenom olika saker som påverkar elkostnader, som en artikel om vad som kan hjälpa en individ sänka elkostnader.
 ---
-# Lärdomar & förbättringar
+# Lärdomar för framtida projekt
+**Tidsdimensionen och problemet med nyckelintegritet**
+Time_start borde inte använts i faktatabellen för att lösa problemet med att date, time och zone inte var unika. Pga av bytet mellan sommar- och vintertid så existerade dubletter i tidsdimensionen då den innehöll data baserad på svensk tid och inte hade någon offsett, detta borde lösts genom att faktiskt göra tids-dimensionen unik. Bästa alternativet hade nog varit att använda UTC och skapa en representation av UTC som nyckel i tidsdimensionen.
+
+**Felhantering och validering:**
+- Validera datakvalité för upptäcka suspekta eller uppenbart felaktiga värden *direkt* vid inhämtning från APIet, onödigt att låta senare processer köras om man redan från början kan fånga fel.
+- Läs tydligt på om vanliga mönster inom felhantering och validering innan saker byggs.
+
+**Skapa automatiska tester**
+Koda egna tester eller använd ett verktyg för att testa hela pipelinen och olika scenarion för att va mer säker på att allt fungerar.
+
 **Planering:**
-- Skapa en mer tydlig vision för dashboarden i planering, vad är syftet, vilken är målgruppen?
-- Pilottesta mer. Generera testdata för det planerade star schemat, ta in det i Power BI och utforska möjliga brister och behov.
-- Undersök noga vilka de olika alternativen för infrastruktur är och dokumentera kort de olika valen.
+- Skapa en tydlig vision för dashboarden i planering, vad är syftet, vilken är målgruppen?
+- Pilottesta. Generera testdata för det planerade star schemat, ta in det i Power BI och utforska möjliga brister och behov.
+- Dokumentera kort de olika alternativen när infrastruktuktur utforskas.
 
 **Naming convention:** Kolla vilka naming conventions som är standard för de olika verktygen, och FÖLJ STRIKT sedan bestämda naming conventions.
 
@@ -256,19 +306,4 @@ Bild från 18/03/2026.
 
  **Dokumentation:**
  - Notion är bra för att checka av när större uppgifter är klara för en hel översikt, men kolla upp ticketsystem eller liknande, så att mindre uppgifter kan kommenteras kort och spåras bättre.
- - Var noggrann med att alltid skriva kommentarer/dokumentation utifrån tanken att andra personer ska kunna förstå det.
- - Undersök om numrering av scripts i form av 01_init_database.sql, 02_DDL_bronze är en värd konvention att följa.
-
-**Arkitektur:**
-- Pipelinen har nu en Data lake och ett bronslager i SQL vilket är lite av en dublering. Alternativ 1: Kalla Data Lake för bronslager och ändra bronze.prices som en landningstabell, för det är egentligen vad det är i nuvarande design. Ifall databasen skulle råka utför problem är detta ett säkrare alternativ än alternativ 2.
-- Alternativ 2: Skippa Data lake storage helt och kopiera in data direkt i SQL, och ha bronslagret som rådata-lager.
-
-**Felhantering och validering:**
-- Validera datakvalité för upptäcka suspekta eller uppenbart felaktiga värden direkt i inhämtning från APIet, onödigt att låta senare processer köras om man redan från början kan fånga fel.
-- Läs tydligt på om vanliga mönster inom felhantering och validering innan saker byggs.
-
-**Åtgärda fel:**
-- Skapa scripts för att enkelt ta bort och uppdatera data, så ifall något blir fel är de redan klara. 
-
-**Power BI:**
-- När det är 0,001kr i dashboarden så kanske det är bättre att ändra så att det blir öre? 
+ - Var noggrann med att alltid skriva kommentarer/dokumentation utifrån tanken att andra personer ska kunna förstå det. 
