@@ -1,9 +1,9 @@
 {
-	"name": "pl_backfill_load",
+	"name": "pl_load_bronze_full_refresh",
 	"properties": {
 		"activities": [
 			{
-				"name": "backfill_insert_into_bronze",
+				"name": "load_bronze_full_refresh",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -27,7 +27,7 @@
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
 							"wildcardFolderPath": {
-								"value": "raw/elpriser/backfill",
+								"value": "raw/elpriser",
 								"type": "Expression"
 							},
 							"wildcardFileName": "*",
