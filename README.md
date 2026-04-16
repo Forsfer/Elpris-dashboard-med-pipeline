@@ -266,7 +266,7 @@ Bild från 18/03/2026.
 
 ## Sida: Förbrukning & Mönster
 ![Förbrukning & Mönster](assets/pbi_forbrukning_monster.png)
-Bild från 18/03/2026.
+Bild från 16/04/2026.
 ## Sida: Om
 ![Om](assets/pbi_om.png)
 Bild från 18/03/2026.
