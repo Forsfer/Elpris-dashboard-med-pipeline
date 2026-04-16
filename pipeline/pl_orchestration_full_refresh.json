@@ -1,0 +1,93 @@
+{
+	"name": "pl_orchestration_full_refresh",
+	"properties": {
+		"activities": [
+			{
+				"name": "full_refresh",
+				"description": "Hämtar all data",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_load_bronze_full_refresh",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "load_silver_full_refresh",
+				"description": "load_silver med variabeln full_refresh satt som 1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "full_refresh",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[silver].[load_silver]",
+					"storedProcedureParameters": {
+						"full_refresh": {
+							"value": "1",
+							"type": "Boolean"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_db_elprisprojekt",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "load_gold_full_refresh",
+				"description": "load_gold med variabeln full_refresh satt som 1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "load_silver_full_refresh",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[gold].[load_gold]",
+					"storedProcedureParameters": {
+						"full_refresh": {
+							"value": "1",
+							"type": "Boolean"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_db_elprisprojekt",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
