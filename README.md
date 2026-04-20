@@ -34,6 +34,7 @@ Pipelinen hämtar kontinuerligt elpriser från ett externt API, lagrar rådata i
 - [Driftövervakning](#Driftövervakning)
 	- [Monitoring](#monitoring) 
 	- [Alerts](#alerts)
+- [Kostnad & Resurs](Kostnad-&-Resurs) 
 - [Recovery](#Recovery)
 - [Säkerhet & Dataskydd](#Säkerhet-&-Dataskydd)
 - [Power BI](#Power-BI)
@@ -107,7 +108,7 @@ Elområde specificeras i URL https://www.elprisetjustnu.se/api/v1/prices/2025/10
 **Downstream**: DW
 
 ## Data Warehouse (DW)
-**Tjänst**: Azure SQL Server med 1 Azure SQL Database
+**Tjänst**: Azure SQL Server med 1 Azure SQL Database (Basic, 2 GB)
 
 **Syfte**: Bearbeta data genom tre lager för att få 'business ready' data med star schema-struktur, och erhålla annan relevant data, redo att skickas till Power BI.
 
@@ -231,6 +232,13 @@ Kontroll av suspekta eller uppenbart felaktiga värden, t.ex. onormalt höga pri
 **Azure:** ADF loggar alla pipeline-körningar med status, starttid och sluttid i Azure Monitor.
 ### Alerts
 Mail-alerts är inställt ifall triggern i ADF som kör dagliga datan skulle misslyckas.
+
+---
+# Kostnad & Resurs
+Azure används med ett studentkonto vilket ger 100 USD, vilket är budgeten för projektet. Förhoppningen är att projektet kan upprätthållas fram till mellan december 2026 och februari 2027 med de resurser som finns.
+
+Från 24e februari till 20e april har $15.90 spenderats, med prognos av Azure att $99.77 kommer ha spenderats när projektet körts 1 år.
+Den dagliga körningen av pipelinen kostar nu ca $0.26, vilket gör att om man räknar att utifrån den än så länge ackulmerade kostnaderna + 310 dagar av dagliga kostnaden så hamnar siffran på $96,5.
 
 ---
 # Recovery
